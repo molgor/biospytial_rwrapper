@@ -1,10 +1,30 @@
 # This is the function that will perform the sampling of the CAR model.
 
-CompleteCarSampler = function(X.standardised, K, p, beta, Y.DA, 
-                              trials, prior.mean.beta, prior.var.beta, 
-                              n.beta.block, proposal.sd.beta, list.block, Wtriplet, 
-                              Wbegfin, Wtripletsum, phi, tau2, proposal.sd.phi,
-                              theta,sigma2, proposal.sd.theta,accept.all,iter_index) {
+CompleteCarSampler = function(X.standardised, 
+                              K, 
+                              p, 
+                              trials, 
+                              n.beta.block, 
+                              list.block, 
+                              Wtriplet, 
+                              Wbegfin, 
+                              Wtripletsum, 
+                              prior.mean.beta, 
+                              prior.var.beta,
+                              offset,
+                              beta, 
+                              Y.DA, 
+                              phi, 
+                              tau2, 
+                              theta,
+                              sigma2, 
+                              prob, 
+                              proposal.sd.theta,
+                              proposal.sd.phi,
+                              proposal.sd.beta, 
+                              accept.all,
+                              accept,
+                              iter_index) {
     ####################################
     ## Sample from Y - data augmentation
     ####################################
@@ -109,6 +129,10 @@ CompleteCarSampler = function(X.standardised, K, p, beta, Y.DA,
         if(ceiling(k)==floor(k))
         {
         #### Update the proposal sds
+          #print("selftuning")
+          #print(proposal.sd.beta)
+          #print(proposal.sd.phi)
+          #print(proposal.sd.theta)
             if(p>2)
             {
             proposal.sd.beta <- common.accceptrates1(accept[1:2], proposal.sd.beta, 40, 50)
@@ -120,7 +144,6 @@ CompleteCarSampler = function(X.standardised, K, p, beta, Y.DA,
         proposal.sd.theta <- common.accceptrates1(accept[5:6], proposal.sd.theta, 40, 50)
         accept.all <- accept.all + accept
         accept <- c(0,0,0,0,0,0)
-        print(proposal.sd.beta)
         }else
         {   
         }
@@ -133,11 +156,13 @@ CompleteCarSampler = function(X.standardised, K, p, beta, Y.DA,
                    tau2 = tau2,
                    sigma2 = sigma2,
                    loglike = loglike,
+                   prob = prob,
                    fitted = fitted,
                    Y.DA = Y.DA,
                    proposal.sd.phi = proposal.sd.phi,
                    proposal.sd.theta = proposal.sd.theta,
                    proposal.sd.beta = proposal.sd.beta,
-                   accept.all = accept.all)
+                   accept.all = accept.all,
+                   accept = accept)
   return(exports)
 } 

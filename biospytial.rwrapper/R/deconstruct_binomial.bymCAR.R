@@ -263,10 +263,10 @@ tau2.posterior.shape <- prior.tau2[1] + 0.5 * (K-n.islands)
 #
 
 
-
+#n.sample = 20050
     for(j in 1:n.sample)
     {
-#      print(proposal.sd.beta)
+      #print(proposal.sd.phi)
     ####################################
     ## Sample from Y - data augmentation
     ####################################
@@ -389,6 +389,11 @@ tau2.posterior.shape <- prior.tau2[1] + 0.5 * (K-n.islands)
         if(ceiling(k)==floor(k))
         {
         #### Update the proposal sds
+#          print('selftuning')
+          
+          print(proposal.sd.beta)
+          print(proposal.sd.phi)
+          print(proposal.sd.theta)
             if(p>2)
             {
             proposal.sd.beta <- common.accceptrates1(accept[1:2], proposal.sd.beta, 40, 50)
@@ -400,7 +405,6 @@ tau2.posterior.shape <- prior.tau2[1] + 0.5 * (K-n.islands)
         proposal.sd.theta <- common.accceptrates1(accept[5:6], proposal.sd.theta, 40, 50)
         accept.all <- accept.all + accept
         accept <- c(0,0,0,0,0,0)
-        print(proposal.sd.beta)
         }else
         {   
         }

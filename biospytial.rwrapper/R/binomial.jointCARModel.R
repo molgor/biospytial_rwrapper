@@ -1,31 +1,36 @@
 ## Arguments from s.carbym
  
 ## Preload the stuff
-source("init_data.R")
+#source("init_data.R")
 # imports
-source("imports.R")
+#source("imports.R")
 # load the building function
 source("samplerCarFunction.R")
 
-formula=formula_sample
-family="binomial"
-W=M_bis
-trials = trials
-data=DataFrame
-burnin=10000
-n.sample=15000
-verbose = TRUE
 
+#formula=formula_sample
+#family="binomial"
+#W=M_bis
+#trials = trials
+#data=DataFrame
+#burnin=10000
+#n.sample=15000
+#verbose = TRUE
+#
 
 
 ## args from binomial.bymCAR
-thin=1 
-prior.mean.beta=NULL 
-prior.var.beta=NULL
-prior.tau2=NULL 
-prior.sigma2=NULL
-MALA=TRUE 
-verbose=TRUE
+
+var binomial.bymCAR2 <- function(formula, data=NULL, trials, W, burnin, n.sample, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
+{
+
+#thin=1 
+#prior.mean.beta=NULL 
+#prior.var.beta=NULL
+#prior.tau2=NULL 
+#prior.sigma2=NULL
+#MALA=TRUE 
+#verbose=TRUE
 
 
 ##############################################
@@ -180,32 +185,6 @@ tau2.posterior.shape <- prior.tau2[1] + 0.5 * (K-n.islands)
 ###########################
 #### Run the Bayesian model
 ###########################
-
-## Function call for sampling the CAR model. 
-#sample =  CompleteCarSampler(X.standardised = X.standardised, 
-#                            K = K, 
-#                            p = p,
-#                            beta = beta,
-#                            Y.DA = Y.DA,
-#                            trials = trials,
-#                            prior.mean.beta = prior.mean.beta,
-#                            prior.var.beta = prior.var.beta,
-#                            n.beta.block = n.beta.block,
-#                            proposal.sd.beta = proposal.sd.beta,
-#                            list.block = list.block,
-#                            Wtriplet=W.triplet,
-#                            Wbegfin = Wbegfin,
-#                            Wtripletsum = Wtripletsum,
-#                            phi=phi,
-#                            tau2 = tau2,
-#                            proposal.sd.phi = proposal.sd.phi,
-#                            theta = theta,
-#                            sigma2 = sigma2,
-#                            proposal.sd.theta = proposal.sd.theta,
-#                            iter_index = 1) 
-#  
-#
-
 ### Partial function of the sampler, used only to iterate over the parameters. 
 CarSampler = partial(CompleteCarSampler,
                             X.standardised = X.standardised, 
@@ -218,7 +197,8 @@ CarSampler = partial(CompleteCarSampler,
                             list.block = list.block,
                             Wtriplet=W.triplet,
                             Wbegfin = Wbegfin,
-                            Wtripletsum = Wtripletsum )
+                            Wtripletsum = Wtripletsum,
+                            offset)
 
 
 
@@ -229,10 +209,12 @@ CarSampler = partial(CompleteCarSampler,
                     tau2 = tau2,
                     theta = theta,
                     sigma2 = sigma2,
+                    prob = prob,
                     proposal.sd.theta = proposal.sd.theta,
                     proposal.sd.phi = proposal.sd.phi,
                     proposal.sd.beta = proposal.sd.beta,
                     accept.all = accept.all,
+                    accept = accept,
                     iter_index = 1) 
  
 
@@ -254,9 +236,10 @@ CarSampler = partial(CompleteCarSampler,
 
 
 ### Trace compilation
+#n.sample = 2050    
     for(j in 1:n.sample)
     {
-      print(sample$proposal.sd.beta)
+      #print(sample$proposal.sd.phi)
     
       ## Iteration of the CarSampler
       sample <-  CarSampler(Y.DA = sample$Y.DA,
@@ -265,10 +248,12 @@ CarSampler = partial(CompleteCarSampler,
                       tau2 =  sample$tau2,
                       theta =  sample$theta,
                       sigma2 = sample$sigma2,
+                      prob = sample$prob,
                       proposal.sd.theta = sample$proposal.sd.theta,
                       proposal.sd.phi = sample$proposal.sd.phi,
                       proposal.sd.beta = sample$proposal.sd.beta,
                       accept.all = sample$accept.all,
+                      accept = sample$accept,
                       iter_index = j) 
 
     
@@ -314,7 +299,7 @@ CarSampler = partial(CompleteCarSampler,
 ###################################
 #### Compute the acceptance rates
 ### accept[2], accept[4] and accept[6] are the total number of iterations
-
+accept.all  <- sample$accept.all
 accept.beta <- 100 * accept.all[1] / accept.all[2]
 accept.phi <- 100 * accept.all[3] / accept.all[4]
 accept.theta <- 100 * accept.all[5] / accept.all[6]
@@ -387,7 +372,6 @@ class(results) <- "CARBayes"
     cat("Finished in ", round(b[3]-a[3], 1), "seconds.\n")
     }else
     {}
-#return(results)
-#}
-results
+return(results)
+}
 
