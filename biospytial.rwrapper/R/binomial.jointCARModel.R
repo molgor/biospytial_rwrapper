@@ -1,11 +1,11 @@
 ## Arguments from s.carbym
  
+## Preload the stuff
 source("init_data.R")
 # imports
 source("imports.R")
 # load the building function
 source("samplerCarFunction.R")
-
 
 formula=formula_sample
 family="binomial"
@@ -177,24 +177,12 @@ n.islands <- max(W.islands$nc)
 tau2.posterior.shape <- prior.tau2[1] + 0.5 * (K-n.islands)   
 
 
-
 ###########################
 #### Run the Bayesian model
 ###########################
-#### Start timer
-    if(verbose)
-    {
-    cat("Generating mamamai function!", n.keep, "post burnin and thinned (if requested) samples.\n", sep = " ")
-    progressBar <- txtProgressBar(style = 3)
-    percentage.points<-round((1:100/100)*n.sample)
-    }else
-    {
-    percentage.points<-round((1:100/100)*n.sample)     
-    }
 
-
-### Run function CompleteCarSampler
-#sample=  CompleteCarSampler(X.standardised = X.standardised, 
+## Function call for sampling the CAR model. 
+#sample =  CompleteCarSampler(X.standardised = X.standardised, 
 #                            K = K, 
 #                            p = p,
 #                            beta = beta,
@@ -217,149 +205,71 @@ tau2.posterior.shape <- prior.tau2[1] + 0.5 * (K-n.islands)
 #                            iter_index = 1) 
 #  
 #
-### Let's make a partial function of Complete Car
-#
-#
-#CarSampler = partial(CompleteCarSampler,
-#                            X.standardised = X.standardised, 
-#                            K = K, 
-#                            p = p,
-#                            trials = trials,
-#                            prior.mean.beta = prior.mean.beta,
-#                            prior.var.beta = prior.var.beta,
-#                            n.beta.block = n.beta.block,
-#                            list.block = list.block,
-#                            Wtriplet=W.triplet,
-#                            Wbegfin = Wbegfin,
-#                            Wtripletsum = Wtripletsum )
-##                            Y.DA = Y.DA,
-##                            beta = beta,
-##                            phi=phi,
-##                            tau2 = tau2,
-##                            theta = theta,
-##                            sigma2 = sigma2,
-##                            proposal.sd.theta = proposal.sd.theta,
-##                            proposal.sd.phi = proposal.sd.phi,
-##                            proposal.sd.beta = proposal.sd.beta,
-##                            iter_index = 1) 
-# 
-#
-### First run a sample with all the parameters
-#
-#The run sample with self reference to the parameters itself
-#
-#
-#sample <-  CarSampler(Y.DA = sample$Y.DA,
-#                      beta = sample$beta,
-#                      phi = sample$phi,
-#                      tau2 =  sample$tau2,
-#                      theta =  sample$theta,
-#                      sigma2 = sample$sigma2,
-#                      proposal.sd.theta = sample$proposal.sd.theta,
-#                      proposal.sd.phi = sample$proposal.sd.phi,
-#                      proposal.sd.beta = sample$proposal.sd.beta,
-#                      iter_index = 1) 
-# 
-#
+
+### Partial function of the sampler, used only to iterate over the parameters. 
+CarSampler = partial(CompleteCarSampler,
+                            X.standardised = X.standardised, 
+                            K = K, 
+                            p = p,
+                            trials = trials,
+                            prior.mean.beta = prior.mean.beta,
+                            prior.var.beta = prior.var.beta,
+                            n.beta.block = n.beta.block,
+                            list.block = list.block,
+                            Wtriplet=W.triplet,
+                            Wbegfin = Wbegfin,
+                            Wtripletsum = Wtripletsum )
 
 
 
+### Initialize sampler 
+    sample <-  CarSampler(Y.DA = Y.DA,
+                    beta = beta,
+                    phi = phi,
+                    tau2 = tau2,
+                    theta = theta,
+                    sigma2 = sigma2,
+                    proposal.sd.theta = proposal.sd.theta,
+                    proposal.sd.phi = proposal.sd.phi,
+                    proposal.sd.beta = proposal.sd.beta,
+                    accept.all = accept.all,
+                    iter_index = 1) 
+ 
+
+
+
+#### Start timer
+    if(verbose)
+    {
+    cat("Begining sampler... (yeah!)", n.keep, "post burnin and thinned (if requested) samples.\n", sep = " ")
+    progressBar <- txtProgressBar(style = 3)
+    percentage.points<-round((1:100/100)*n.sample)
+    }else
+    {
+    percentage.points<-round((1:100/100)*n.sample)     
+    }
+
+
+  
+
+
+### Trace compilation
     for(j in 1:n.sample)
     {
-#      print(proposal.sd.beta)
-    ####################################
-    ## Sample from Y - data augmentation
-    ####################################
-        if(n.miss>0)
-        {
-        Y.DA[which.miss==0] <- rbinom(n=n.miss, size=trials[which.miss==0], prob=prob[which.miss==0])
-        failures.DA <- trials - Y.DA
-        }else
-        {}
-        
-        
-        
-    ####################
-    ## Sample from beta
-    ####################
-    offset.temp <- phi + offset + theta
-        if(p>2)
-        {
-        temp <- binomialbetaupdateMALA(X.standardised, K, p, beta, offset.temp, Y.DA, failures.DA, trials, prior.mean.beta, prior.var.beta, n.beta.block, proposal.sd.beta, list.block)
-        }else
-        {
-        temp <- binomialbetaupdateRW(X.standardised, K, p, beta, offset.temp, Y.DA, failures.DA, prior.mean.beta, prior.var.beta, proposal.sd.beta)
-        }
-    beta <- temp[[1]]
-    accept[1] <- accept[1] + temp[[2]]
-    accept[2] <- accept[2] + n.beta.block  
-
-
-
-    ####################
-    ## Sample from phi
-    ####################
-    beta.offset <- X.standardised %*% beta + theta + offset
-        if(MALA)
-        {
-        temp1 <- binomialcarupdateMALA(Wtriplet=W.triplet, Wbegfin=W.begfin, Wtripletsum=W.triplet.sum, nsites=K, phi=phi, tau2=tau2, y=Y.DA, failures=failures.DA, trials=trials, phi_tune=proposal.sd.phi, rho=1, offset=beta.offset)
-        }else
-        {
-        temp1 <- binomialcarupdateRW(Wtriplet=W.triplet, Wbegfin=W.begfin, Wtripletsum=W.triplet.sum, nsites=K, phi=phi, tau2=tau2, y=Y.DA, failures=failures.DA, phi_tune=proposal.sd.phi, rho=1, offset=beta.offset)
-        }
-    phi <- temp1[[1]]
-    #### Why substract mean of islands
-    phi[which(islands==1)] <- phi[which(islands==1)] - mean(phi[which(islands==1)])
-    accept[3] <- accept[3] + temp1[[2]]
-    accept[4] <- accept[4] + K
-     
+      print(sample$proposal.sd.beta)
     
-
-    ####################
-    ## Sample from theta
-    ####################
-    beta.offset <- as.numeric(X.standardised %*% beta) + phi + offset
-        if(MALA)
-        {
-        temp2 <- binomialindepupdateMALA(nsites=K, theta=theta, sigma2=sigma2, y=Y.DA, failures=failures.DA, trials=trials, theta_tune=proposal.sd.theta, offset=beta.offset) 
-        }else
-        {
-        temp2 <- binomialindepupdateRW(nsites=K, theta=theta, sigma2=sigma2, y=Y.DA, failures=failures.DA, theta_tune=proposal.sd.theta, offset=beta.offset) 
-        }
-    theta <- temp2[[1]]
-    ### Same thing, substracting theta
-    theta <- theta - mean(theta)    
-    accept[5] <- accept[5] + temp2[[2]]
-    accept[6] <- accept[6] + K          
-     
-
-
-    ###################
-    ## Sample from tau2
-    ###################
-    temp2 <- quadform(W.triplet, W.triplet.sum, n.triplet, K, phi, phi, 1)    
-    tau2.posterior.scale <- temp2 + prior.tau2[2] 
-    tau2 <- 1 / rgamma(1, tau2.posterior.shape, scale=(1/tau2.posterior.scale))
-    
-    
-    
-    #####################
-    ## Sample from sigma2
-    #####################
-    sigma2.posterior.scale <- prior.sigma2[2] + 0.5*sum(theta^2)
-    sigma2 <- 1 / rgamma(1, sigma2.posterior.shape, scale=(1/sigma2.posterior.scale))
-    
-    
-    
-    #########################
-    ## Calculate the deviance
-    #########################
-    ## The model written form
-    lp <- as.numeric(X.standardised %*% beta) + phi + theta + offset
-    prob <- exp(lp)  / (1 + exp(lp))
-    fitted <- trials * prob
-    loglike <- dbinom(x=Y, size=trials, prob=prob, log=TRUE)
-
+      ## Iteration of the CarSampler
+      sample <-  CarSampler(Y.DA = sample$Y.DA,
+                      beta = sample$beta,
+                      phi = sample$phi,
+                      tau2 =  sample$tau2,
+                      theta =  sample$theta,
+                      sigma2 = sample$sigma2,
+                      proposal.sd.theta = sample$proposal.sd.theta,
+                      proposal.sd.phi = sample$proposal.sd.phi,
+                      proposal.sd.beta = sample$proposal.sd.beta,
+                      accept.all = sample$accept.all,
+                      iter_index = j) 
 
     
     ###################
@@ -369,44 +279,17 @@ tau2.posterior.shape <- prior.tau2[1] + 0.5 * (K-n.islands)
         if(j > burnin & (j-burnin)%%thin==0)
         {
         ele <- (j - burnin) / thin
-        samples.beta[ele, ] <- beta
-        samples.re[ele, ] <- phi + theta
-        samples.tau2[ele, ] <- tau2
-        samples.sigma2[ele, ] <- sigma2
-        samples.loglike[ele, ] <- loglike
-        samples.fitted[ele, ] <- fitted
-            if(n.miss>0) samples.Y[ele, ] <- Y.DA[which.miss==0]
+        samples.beta[ele, ] <- sample$beta
+        samples.re[ele, ] <- sample$phi + sample$theta
+        samples.tau2[ele, ] <- sample$tau2
+        samples.sigma2[ele, ] <- sample$sigma2
+        samples.loglike[ele, ] <- sample$loglike
+        samples.fitted[ele, ] <- sample$fitted
+            if(n.miss>0) samples.Y[ele, ] <- sample$Y.DA[which.miss==0]
         }else
         {
         }
 
-
-    
-    ########################################
-    ## Self tune the acceptance probabilties
-    ########################################
-    k <- j/100
-        if(ceiling(k)==floor(k))
-        {
-        #### Update the proposal sds
-            if(p>2)
-            {
-            proposal.sd.beta <- common.accceptrates1(accept[1:2], proposal.sd.beta, 40, 50)
-            }else
-            {
-            proposal.sd.beta <- common.accceptrates1(accept[1:2], proposal.sd.beta, 30, 40)    
-            }
-        proposal.sd.phi <- common.accceptrates1(accept[3:4], proposal.sd.phi, 40, 50)
-        proposal.sd.theta <- common.accceptrates1(accept[5:6], proposal.sd.theta, 40, 50)
-        accept.all <- accept.all + accept
-        accept <- c(0,0,0,0,0,0)
-        print(proposal.sd.beta)
-        }else
-        {   
-        }
-    
-    
-    
     ################################       
     ## print progress to the console
     ################################
@@ -504,6 +387,7 @@ class(results) <- "CARBayes"
     cat("Finished in ", round(b[3]-a[3], 1), "seconds.\n")
     }else
     {}
-
-    results
+#return(results)
+#}
+results
 
