@@ -5,7 +5,6 @@
 # imports
 #source("imports.R")
 # load the building function
-source("samplerCarFunction.R")
 
 
 #formula=formula_sample
@@ -16,21 +15,26 @@ source("samplerCarFunction.R")
 #burnin=10000
 #n.sample=15000
 #verbose = TRUE
-#
+##
 
 
 ## args from binomial.bymCAR
 
-var binomial.bymCAR2 <- function(formula, data=NULL, trials, W, burnin, n.sample, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
+#print("Importing imports")
+
+source("imports.R")
+source("samplerCarFunction.R")
+
+binomial.bymCAR2 <- function(formula, data=NULL, trials, W, burnin, n.sample, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
 {
 
-#thin=1 
-#prior.mean.beta=NULL 
-#prior.var.beta=NULL
-#prior.tau2=NULL 
-#prior.sigma2=NULL
-#MALA=TRUE 
-#verbose=TRUE
+thin=1 
+prior.mean.beta=NULL 
+prior.var.beta=NULL
+prior.tau2=NULL 
+prior.sigma2=NULL
+MALA=TRUE 
+verbose=TRUE
 
 
 ##############################################
@@ -182,6 +186,8 @@ n.islands <- max(W.islands$nc)
 tau2.posterior.shape <- prior.tau2[1] + 0.5 * (K-n.islands)   
 
 
+
+#environment(CompleteCarSampler)  <- environment()
 ###########################
 #### Run the Bayesian model
 ###########################
@@ -193,11 +199,20 @@ CarSampler = partial(CompleteCarSampler,
                             trials = trials,
                             prior.mean.beta = prior.mean.beta,
                             prior.var.beta = prior.var.beta,
+                            prior.tau2 = prior.tau2,
+                            prior.sigma2 = prior.sigma2,
                             n.beta.block = n.beta.block,
                             list.block = list.block,
-                            Wtriplet=W.triplet,
-                            Wbegfin = Wbegfin,
-                            Wtripletsum = Wtripletsum,
+                            W.triplet=W.triplet,
+                            W.begfin = W.begfin,
+                            W.triplet.sum = W.triplet.sum,
+                            n.miss = n.miss,
+                            n.triplet = n.triplet,
+                            which.miss = which.miss,
+                            MALA = MALA,
+                            tau2.posterior.shape = tau2.posterior.shape,
+                            sigma2.posterior.shape = sigma2.posterior.shape,
+                            Y = Y,
                             offset)
 
 
@@ -237,12 +252,15 @@ CarSampler = partial(CompleteCarSampler,
 
 ### Trace compilation
 #n.sample = 2050    
+ 
+      pttm = proc.time()
     for(j in 1:n.sample)
     {
       #print(sample$proposal.sd.phi)
     
       ## Iteration of the CarSampler
-      sample <-  CarSampler(Y.DA = sample$Y.DA,
+      
+     sample <-  CarSampler(Y.DA = sample$Y.DA,
                       beta = sample$beta,
                       phi = sample$phi,
                       tau2 =  sample$tau2,
@@ -256,26 +274,28 @@ CarSampler = partial(CompleteCarSampler,
                       accept = sample$accept,
                       iter_index = j) 
 
-    
-    ###################
+
+   ###################
     ## Save the results
     ###################
     ## Nice way to save samples given j-burnin modulus thin
         if(j > burnin & (j-burnin)%%thin==0)
         {
+
         ele <- (j - burnin) / thin
         samples.beta[ele, ] <- sample$beta
-        samples.re[ele, ] <- sample$phi + sample$theta
+        samples.re[ele, ] <- sample$re 
         samples.tau2[ele, ] <- sample$tau2
         samples.sigma2[ele, ] <- sample$sigma2
         samples.loglike[ele, ] <- sample$loglike
         samples.fitted[ele, ] <- sample$fitted
             if(n.miss>0) samples.Y[ele, ] <- sample$Y.DA[which.miss==0]
-        }else
+        
+               }else
         {
         }
 
-    ################################       
+          ################################       
     ## print progress to the console
     ################################
           if(j %in% percentage.points & verbose)
@@ -284,6 +304,9 @@ CarSampler = partial(CompleteCarSampler,
           }
      }
 
+ tiempo = proc.time() - pttm
+        print(tiempo)
+ 
 ##### end timer
     if(verbose)
     {

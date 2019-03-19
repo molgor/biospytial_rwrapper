@@ -6,9 +6,9 @@ CompleteCarSampler = function(X.standardised,
                               trials, 
                               n.beta.block, 
                               list.block, 
-                              Wtriplet, 
-                              Wbegfin, 
-                              Wtripletsum, 
+                              W.triplet, 
+                              W.begfin, 
+                              W.triplet.sum, 
                               prior.mean.beta, 
                               prior.var.beta,
                               offset,
@@ -24,11 +24,20 @@ CompleteCarSampler = function(X.standardised,
                               proposal.sd.beta, 
                               accept.all,
                               accept,
+                              n.miss,
+                              which.miss,
+                              n.triplet,
+                              MALA,
+                              prior.tau2,
+                              prior.sigma2,
+                              tau2.posterior.shape,
+                              sigma2.posterior.shape,
+                              Y,
                               iter_index) {
     ####################################
     ## Sample from Y - data augmentation
     ####################################
-        if(n.miss>0)
+  if(n.miss>0)
         {
         Y.DA[which.miss==0] <- rbinom(n=n.miss, size=trials[which.miss==0], prob=prob[which.miss==0])
         failures.DA <- trials - Y.DA
@@ -60,12 +69,14 @@ CompleteCarSampler = function(X.standardised,
     beta.offset <- X.standardised %*% beta + theta + offset
         if(MALA)
         {
-        temp1 <- binomialcarupdateMALA(Wtriplet=W.triplet, Wbegfin=W.begfin, Wtripletsum=W.triplet.sum, nsites=K, phi=phi, tau2=tau2, y=Y.DA, failures=failures.DA, trials=trials, phi_tune=proposal.sd.phi, rho=1, offset=beta.offset)
+           temp1 <- binomialcarupdateMALA(Wtriplet=W.triplet, Wbegfin=W.begfin, Wtripletsum=W.triplet.sum, nsites=K, phi=phi, tau2=tau2, y=Y.DA, failures=failures.DA, trials=trials, phi_tune=proposal.sd.phi, rho=1, offset=beta.offset)
+      
         }else
         {
         temp1 <- binomialcarupdateRW(Wtriplet=W.triplet, Wbegfin=W.begfin, Wtripletsum=W.triplet.sum, nsites=K, phi=phi, tau2=tau2, y=Y.DA, failures=failures.DA, phi_tune=proposal.sd.phi, rho=1, offset=beta.offset)
         }
     phi <- temp1[[1]]
+    
     #### Why substract mean of islands
     phi[which(islands==1)] <- phi[which(islands==1)] - mean(phi[which(islands==1)])
     accept[3] <- accept[3] + temp1[[2]]
@@ -79,8 +90,11 @@ CompleteCarSampler = function(X.standardised,
     beta.offset <- as.numeric(X.standardised %*% beta) + phi + offset
         if(MALA)
         {
+        
         temp2 <- binomialindepupdateMALA(nsites=K, theta=theta, sigma2=sigma2, y=Y.DA, failures=failures.DA, trials=trials, theta_tune=proposal.sd.theta, offset=beta.offset) 
-        }else
+        }
+
+        else
         {
         temp2 <- binomialindepupdateRW(nsites=K, theta=theta, sigma2=sigma2, y=Y.DA, failures=failures.DA, theta_tune=proposal.sd.theta, offset=beta.offset) 
         }
@@ -95,9 +109,12 @@ CompleteCarSampler = function(X.standardised,
     ###################
     ## Sample from tau2
     ###################
-    temp2 <- quadform(W.triplet, W.triplet.sum, n.triplet, K, phi, phi, 1)    
+    
+
+temp2 <- quadform(W.triplet, W.triplet.sum, n.triplet, K, phi, phi, 1)    
     tau2.posterior.scale <- temp2 + prior.tau2[2] 
     tau2 <- 1 / rgamma(1, tau2.posterior.shape, scale=(1/tau2.posterior.scale))
+    
     
     
     
@@ -125,7 +142,7 @@ CompleteCarSampler = function(X.standardised,
     ########################################
     ## Self tune the acceptance probabilties
     ########################################
-    k <- iter_index/100
+    k <- iter_index/90
         if(ceiling(k)==floor(k))
         {
         #### Update the proposal sds
@@ -152,7 +169,7 @@ CompleteCarSampler = function(X.standardised,
   exports  <- list(beta = beta,
                    phi = phi,
                    theta = theta,
-                   re = samples.re,
+                   re = phi + theta,
                    tau2 = tau2,
                    sigma2 = sigma2,
                    loglike = loglike,
@@ -163,6 +180,7 @@ CompleteCarSampler = function(X.standardised,
                    proposal.sd.theta = proposal.sd.theta,
                    proposal.sd.beta = proposal.sd.beta,
                    accept.all = accept.all,
-                   accept = accept)
+                   accept = accept
+                    )
   return(exports)
 } 

@@ -17,7 +17,26 @@
 # 4. Load as function my.binomial.bymCAR in my.binomial.bymCAR.R
 # 5. Run the above line
 
-model.sample <-my_CARbym(formula=formula_sample,family="binomial",W=M_bis,trials = trials,data=TDF,burnin=10000,n.sample=15000,verbose = TRUE,custom_function=my.binomial.bymCAR) 
+#model.sample <-my_CARbym(formula=formula_sample,family="binomial",W=M_bis,trials = trials,data=TDF,burnin=10000,n.sample=15000,verbose = TRUE,custom_function=my.binomial.bymCAR) 
+
+
+
+
+
+source("init_data.R")
+# imports
+# load the building function
+source("samplerCarFunction.R")
+
+#source("imports.R")
+source("binomial.jointCARModel.R")
+
+model_mio  <- binomial.bymCAR2(formula=formula_sample, data=DataFrame, trials=trials, W=M_bis, burnin=10000, n.sample=15000, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
+
+
+binomial.bymCAR <- getFromNamespace('binomial.bymCAR','CARBayes')
+
+model_std <- binomial.bymCAR(formula=formula_sample, data=DataFrame, trials=trials, W=M_bis, burnin=10000, n.sample=15000, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
 
 
 #### Init data sandboxing the carsampler
