@@ -1,27 +1,3 @@
-## Arguments from s.carbym
- 
-## Preload the stuff
-#source("init_data.R")
-# imports
-#source("imports.R")
-# load the building function
-
-
-#formula=formula_sample
-#family="binomial"
-#W=M_bis
-#trials = trials
-#data=DataFrame
-#burnin=10000
-#n.sample=15000
-#verbose = TRUE
-##
-
-
-## args from binomial.bymCAR
-
-#print("Importing imports")
-
 source("imports.R")
 source("samplerCarFunction.R")
 
@@ -66,7 +42,7 @@ Y.DA <- Y
 
 
 #### Check and format the trials argument
-    ### This are only checks for assessing data 
+#####[J] This are only checks for assessing data 
     if(sum(is.na(trials))>0) stop("the numbers of trials has missing 'NA' values.", call.=FALSE)
     if(!is.numeric(trials)) stop("the numbers of trials has non-numeric values.", call.=FALSE)
 int.check <- K-sum(ceiling(trials)==floor(trials))
@@ -83,15 +59,14 @@ failures.DA <- trials - Y.DA
     if(is.null(prior.tau2)) prior.tau2 <- c(1, 0.01)
     if(is.null(prior.sigma2)) prior.sigma2 <- c(1, 0.01)
 
-### This functions stop the execution
+###[J] This functions stop the execution
 common.prior.beta.check(prior.mean.beta, prior.var.beta, p)
 common.prior.var.check(prior.tau2)
 common.prior.var.check(prior.sigma2)
 
 
 ## Compute the blocking structure for beta     
-## I dont know what is this
-
+###[J] Structure for the fixed effects
 block.temp <- common.betablock(p)
 beta.beg  <- block.temp[[1]]
 beta.fin <- block.temp[[2]]
@@ -113,11 +88,9 @@ common.burnin.nsample.thin.check(burnin, n.sample, thin)
 #### Initial parameter values
 #############################
 dat <- cbind(Y, failures)
-### Why standarised ?? , why quasibinomial ??
 mod.glm <- glm(dat~X.standardised-1, offset=offset, family="quasibinomial")
 beta.mean <- mod.glm$coefficients
 ### Extract the sd from the covariance matrix of the beta estimators, 
-### why scaled ??
 beta.sd <- sqrt(diag(summary(mod.glm)$cov.scaled))
 ## generate random betas 
 beta <- rnorm(n=length(beta.mean), mean=beta.mean, sd=beta.sd)
@@ -167,7 +140,7 @@ sigma2.posterior.shape <- prior.sigma2[1] + 0.5 * K
 ##################################
 #### Set up the spatial quantities
 ##################################
-#### CAR quantities
+####[J] CAR quantities
 W.quants <- common.Wcheckformat(W)
 W <- W.quants$W
 W.triplet <- W.quants$W.triplet
@@ -187,11 +160,10 @@ tau2.posterior.shape <- prior.tau2[1] + 0.5 * (K-n.islands)
 
 
 
-#environment(CompleteCarSampler)  <- environment()
 ###########################
 #### Run the Bayesian model
 ###########################
-### Partial function of the sampler, used only to iterate over the parameters. 
+###[J] Partial function of the sampler, used only to iterate over the parameters. 
 CarSampler = partial(CompleteCarSampler,
                             X.standardised = X.standardised, 
                             K = K, 
@@ -217,8 +189,8 @@ CarSampler = partial(CompleteCarSampler,
 
 
 
-### Initialize sampler 
-    sample <-  CarSampler(Y.DA = Y.DA,
+###[J] Initialize sampler 
+    model.sample <-  CarSampler(Y.DA = Y.DA,
                     beta = beta,
                     phi = phi,
                     tau2 = tau2,
@@ -250,52 +222,45 @@ CarSampler = partial(CompleteCarSampler,
   
 
 
-### Trace compilation
-#n.sample = 2050    
- 
-      pttm = proc.time()
+###[J] Trace compilation
     for(j in 1:n.sample)
     {
-      #print(sample$proposal.sd.phi)
-    
-      ## Iteration of the CarSampler
-      
-     sample <-  CarSampler(Y.DA = sample$Y.DA,
-                      beta = sample$beta,
-                      phi = sample$phi,
-                      tau2 =  sample$tau2,
-                      theta =  sample$theta,
-                      sigma2 = sample$sigma2,
-                      prob = sample$prob,
-                      proposal.sd.theta = sample$proposal.sd.theta,
-                      proposal.sd.phi = sample$proposal.sd.phi,
-                      proposal.sd.beta = sample$proposal.sd.beta,
-                      accept.all = sample$accept.all,
-                      accept = sample$accept,
+    ## Iteration of the CarSampler
+     model.sample <-  CarSampler(Y.DA = model.sample$Y.DA,
+                      beta = model.sample$beta,
+                      phi = model.sample$phi,
+                      tau2 =  model.sample$tau2,
+                      theta =  model.sample$theta,
+                      sigma2 = model.sample$sigma2,
+                      prob = model.sample$prob,
+                      proposal.sd.theta = model.sample$proposal.sd.theta,
+                      proposal.sd.phi = model.sample$proposal.sd.phi,
+                      proposal.sd.beta = model.sample$proposal.sd.beta,
+                      accept.all = model.sample$accept.all,
+                      accept = model.sample$accept,
                       iter_index = j) 
 
 
-   ###################
+    ###################
     ## Save the results
     ###################
-    ## Nice way to save samples given j-burnin modulus thin
         if(j > burnin & (j-burnin)%%thin==0)
         {
 
         ele <- (j - burnin) / thin
-        samples.beta[ele, ] <- sample$beta
-        samples.re[ele, ] <- sample$re 
-        samples.tau2[ele, ] <- sample$tau2
-        samples.sigma2[ele, ] <- sample$sigma2
-        samples.loglike[ele, ] <- sample$loglike
-        samples.fitted[ele, ] <- sample$fitted
-            if(n.miss>0) samples.Y[ele, ] <- sample$Y.DA[which.miss==0]
+        samples.beta[ele, ] <- model.sample$beta
+        samples.re[ele, ] <- model.sample$phi + model.sample$theta
+        samples.tau2[ele, ] <- model.sample$tau2
+        samples.sigma2[ele, ] <- model.sample$sigma2
+        samples.loglike[ele, ] <- model.sample$loglike
+        samples.fitted[ele, ] <- model.sample$fitted
+            if(n.miss>0) samples.Y[ele, ] <- model.sample$Y.DA[which.miss==0]
         
                }else
         {
         }
 
-          ################################       
+    ################################       
     ## print progress to the console
     ################################
           if(j %in% percentage.points & verbose)
@@ -304,9 +269,6 @@ CarSampler = partial(CompleteCarSampler,
           }
      }
 
- tiempo = proc.time() - pttm
-        print(tiempo)
- 
 ##### end timer
     if(verbose)
     {
@@ -320,9 +282,9 @@ CarSampler = partial(CompleteCarSampler,
 ###################################
 #### Summarise and save the results 
 ###################################
-#### Compute the acceptance rates
-### accept[2], accept[4] and accept[6] are the total number of iterations
-accept.all  <- sample$accept.all
+####[J] Compute the acceptance rates
+###[J] accept[2], accept[4] and accept[6] are the total number of iterations
+accept.all  <- model.sample$accept.all
 accept.beta <- 100 * accept.all[1] / accept.all[2]
 accept.phi <- 100 * accept.all[3] / accept.all[4]
 accept.theta <- 100 * accept.all[5] / accept.all[6]
@@ -395,6 +357,7 @@ class(results) <- "CARBayes"
     cat("Finished in ", round(b[3]-a[3], 1), "seconds.\n")
     }else
     {}
-return(results)
+exports = list('model.results'=results, 'state'=model.sample)    
+return(exports)
 }
 

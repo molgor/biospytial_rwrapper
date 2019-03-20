@@ -169,7 +169,7 @@ temp2 <- quadform(W.triplet, W.triplet.sum, n.triplet, K, phi, phi, 1)
   exports  <- list(beta = beta,
                    phi = phi,
                    theta = theta,
-                   re = phi + theta,
+                   #re = phi + theta,
                    tau2 = tau2,
                    sigma2 = sigma2,
                    loglike = loglike,
