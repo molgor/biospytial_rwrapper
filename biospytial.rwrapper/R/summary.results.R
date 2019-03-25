@@ -1,6 +1,6 @@
 ## Functions for summarizing results
 
-SummariseResults  <- function(samples.Y,samples.fitted,samples.beta, samples.re, samples.tau2, samples.sigma2, samples.loglike, X, X.standardised, X.indicator, X.mean, X.sd, Y, trials,offset,formula, n.miss, p, accept.all) {
+SummariseResults  <- function(samples.Y,samples.fitted,samples.beta, samples.re, samples.tau2, samples.sigma2, samples.loglike, X, X.standardised, X.indicator, X.mean, X.sd, Y, trials,offset,formula, n.miss,n.keep, p, accept.all) {
   accept.beta <- 100 * accept.all[1] / accept.all[2]
   accept.phi <- 100 * accept.all[3] / accept.all[4]
   accept.theta <- 100 * accept.all[5] / accept.all[6]

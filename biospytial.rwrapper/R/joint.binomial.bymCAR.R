@@ -1,26 +1,12 @@
 # This is a script for loading all the necessary data for processing 
 
-rm(list=ls())
-source("init_data.R")
-# load the building function
-source("samplerCarFunction.R")
 source("single.binomial.bymCAR.R")
 
-
-n.sample = 10000
-burnin=10000
-postburnin = burnin +1000 
-thin = 1
-#p = 3
-#aK = 4061
-verbose = TRUE
-### Remove and leave only the necesary
-
-
+joint.binomial.bymCARModel2  <- function(formula_S, formula_P, data=DataFrame,n.sample,burnin, postburnin,thin,verbose){
 
 ### Prepare common frame for both
 
-frame.sample.results <- common.frame(formula_sample, DataFrame, "binomial")
+frame.sample.results <- common.frame(formula_S, DataFrame, "binomial")
 K.sample <- frame.sample.results$n
 p.sample <- frame.sample.results$p
 X.sample <- frame.sample.results$X
@@ -35,7 +21,7 @@ n.miss.sample <- frame.sample.results$n.miss
 Y.DA.sample <- Y.sample
 
 
-frame.presence.results <- common.frame(formula_presence, DataFrame, "binomial")
+frame.presence.results <- common.frame(formula_P, DataFrame, "binomial")
 K.presence <- frame.presence.results$n
 p.presence <- frame.presence.results$p
 X.presence <- frame.presence.results$X
@@ -76,10 +62,10 @@ if(n.miss.sample>0) samples.Y.sample <- array(NA, c(n.keep, n.miss.sample))
 
 
 
-model.sample  <- single.binomial.bymCAR(formula=formula_sample, name='Sample Effort Model',data=DataFrame, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
+model.sample  <- single.binomial.bymCAR(formula=formula_S, name='Sample Effort Model',data=DataFrame, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
 
 
-model.presence  <- single.binomial.bymCAR(formula=formula_presence, name='Presence model', data=DataFrame, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
+model.presence  <- single.binomial.bymCAR(formula=formula_P, name='Presence model', data=DataFrame, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
 
 
 presence.state  <-  model.presence$state
@@ -172,13 +158,13 @@ CarSampler.presence  <- model.presence$f_sampler
 ##### end timer
     if(verbose)
     {
-    cat("\nSummarising new results.")
+
     close(progressBar)
     }else
     {}
 
 
-
+print("Compiling summary for S process")
 results.sample  <- SummariseResults(samples.Y = samples.Y.sample, 
                              samples.fitted = samples.fitted.sample, 
                              samples.beta = samples.beta.sample,  
@@ -196,10 +182,11 @@ results.sample  <- SummariseResults(samples.Y = samples.Y.sample,
                              p = p.sample, 
                              offset = offset.sample, 
                              accept.all = model.sample$state$accept.all,
-                             formula = formula_sample, 
-                             n.miss = n.miss.sample)
+                             formula = formula_S, 
+                             n.miss = n.miss.sample,
+                             n.keep = n.keep)
 
-print("Compiling results for presence process \n")
+print("Compiling summary for the P process")
 results.presence  <- SummariseResults(samples.Y = samples.Y.presence, 
                              samples.fitted = samples.fitted.presence, 
                              samples.beta = samples.beta.presence,  
@@ -217,10 +204,12 @@ results.presence  <- SummariseResults(samples.Y = samples.Y.presence,
                              p = p.presence, 
                              offset = offset.presence, 
                              accept.all = model.presence$state$accept.all,
-                             formula = formula_presence, 
-                             n.miss = n.miss.presence)
+                             formula = formula_P, 
+                             n.miss = n.miss.presence,
+                             n.keep = n.keep)
 
 
+exports = list("S"=results.sample, "P"=results.presence)
 
-
-
+return(exports)
+} 
