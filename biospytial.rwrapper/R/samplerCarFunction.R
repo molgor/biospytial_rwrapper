@@ -1,4 +1,6 @@
 # This is the function that will perform the sampling of the CAR model.
+## It is intended to be a low level function. 
+## Makes reference to CARBayes, C++ sampling functions
 
 CompleteCarSampler = function(X.standardised, 
                               K, 

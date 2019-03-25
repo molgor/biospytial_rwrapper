@@ -4,7 +4,7 @@ source("init_data.R")
 # imports
 source("imports.R")
 # load the building function
-#source("samplerCarFunction.R")
+source("samplerCarFunction.R")
 
 
 formula=formula_sample
@@ -264,7 +264,6 @@ tau2.posterior.shape <- prior.tau2[1] + 0.5 * (K-n.islands)
 
 
 #n.sample = 20050
-    pttm  <- proc.time()
     for(j in 1:n.sample)
     {
       #print(proposal.sd.phi)
@@ -303,11 +302,8 @@ tau2.posterior.shape <- prior.tau2[1] + 0.5 * (K-n.islands)
     beta.offset <- X.standardised %*% beta + theta + offset
         if(MALA)
         {
-
         temp1 <- binomialcarupdateMALA(Wtriplet=W.triplet, Wbegfin=W.begfin, Wtripletsum=W.triplet.sum, nsites=K, phi=phi, tau2=tau2, y=Y.DA, failures=failures.DA, trials=trials, phi_tune=proposal.sd.phi, rho=1, offset=beta.offset)
-
-        }
-        else
+        }else
         {
         temp1 <- binomialcarupdateRW(Wtriplet=W.triplet, Wbegfin=W.begfin, Wtripletsum=W.triplet.sum, nsites=K, phi=phi, tau2=tau2, y=Y.DA, failures=failures.DA, phi_tune=proposal.sd.phi, rho=1, offset=beta.offset)
         }
@@ -423,8 +419,7 @@ tau2.posterior.shape <- prior.tau2[1] + 0.5 * (K-n.islands)
           setTxtProgressBar(progressBar, j/n.sample)
           }
      }
-tiempo  <- proc.time() - pttm
-print(tiempo)
+
 ##### end timer
     if(verbose)
     {

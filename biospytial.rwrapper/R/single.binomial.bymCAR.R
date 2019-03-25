@@ -1,7 +1,7 @@
 source("imports.R")
 source("samplerCarFunction.R")
 
-binomial.bymCAR2 <- function(formula, data=NULL,name="<no name>", trials, W, burnin, n.sample, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
+single.binomial.bymCAR <- function(formula, data=NULL,name="<no name>", trials, W, burnin, n.sample, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
 {
 
 ##############################################
