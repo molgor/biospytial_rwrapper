@@ -34,6 +34,7 @@ CompleteCarSampler = function(X.standardised,
                               prior.sigma2,
                               tau2.posterior.shape,
                               sigma2.posterior.shape,
+                              failures.DA,
                               Y,
                               iter_index) {
     ####################################

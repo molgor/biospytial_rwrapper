@@ -13,6 +13,9 @@ library(purrr)
 library(reticulate)
 library(biospytial.rwrapper)
 
+## figure out a way to export the functions here. 
+# It works for presence_absence_naive. I dont know why not with the others
+source("SpeciesModels.R")
 # Import adjancency matrix generated from region
 mat_filename = "/outputs/training_data_sample_puebla_p9_abies_pinophyta_adjmat.npy"
 # Use numpy functions
@@ -52,9 +55,14 @@ M_bis = M[-c(idx),-c(idx)]
 # Preprocess for generating pseudo absences
 # Change the name of a column that for some reason is called the same
 names(TDF)[23] <- 'covid2'
-DataFrame = TDF %>% rowwise() %>% 
-            mutate(sample=pseudo_absence_naive(Plantae,LUCA),species=pseudo_absence_naive(Pinophyta,Plantae))
+## Treatment for adding missing data
+#DataFrame = TDF %>% rowwise() %>% 
+#            mutate(sample=pseudo_absence_naive(Plantae,LUCA),species=pseudo_absence_naive(Pinophyta,Plantae))
 
+## For the moment not take the missing values
+
+DataFrame = TDF %>% rowwise() %>% 
+            mutate(sample=pseudo_absence_trivial(Plantae,LUCA),species=pseudo_absence_trivial(Pinophyta,Plantae))
 ###
 # Formula definition
 formula_sample=sample~Disttoroadm+Populationm #+factor(tipos)

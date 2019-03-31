@@ -177,6 +177,7 @@ CarSampler = partial(CompleteCarSampler,
                             MALA = MALA,
                             tau2.posterior.shape = tau2.posterior.shape,
                             sigma2.posterior.shape = sigma2.posterior.shape,
+                            failures.DA = failures.DA,
                             Y = Y,
                             offset)
 

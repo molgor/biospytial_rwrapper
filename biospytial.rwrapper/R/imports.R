@@ -1,4 +1,4 @@
-# From CARBayes
+# Frfm CARBayes
 
 common.verbose <- getFromNamespace('common.verbose','CARBayes')
 
