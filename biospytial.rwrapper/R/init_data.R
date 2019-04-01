@@ -56,13 +56,13 @@ M_bis = M[-c(idx),-c(idx)]
 # Change the name of a column that for some reason is called the same
 names(TDF)[23] <- 'covid2'
 ## Treatment for adding missing data
-#DataFrame = TDF %>% rowwise() %>% 
-#            mutate(sample=pseudo_absence_naive(Plantae,LUCA),species=pseudo_absence_naive(Pinophyta,Plantae))
+DataFrame = TDF %>% rowwise() %>% 
+            mutate(sample=pseudo_absence_naive(Plantae,LUCA),species=pseudo_absence_naive(Pinophyta,Plantae))
 
 ## For the moment not take the missing values
 
-DataFrame = TDF %>% rowwise() %>% 
-            mutate(sample=pseudo_absence_trivial(Plantae,LUCA),species=pseudo_absence_trivial(Pinophyta,Plantae))
+#DataFrame = TDF %>% rowwise() %>% 
+#            mutate(sample=pseudo_absence_trivial(Plantae,LUCA),species=pseudo_absence_trivial(Pinophyta,Plantae))
 ###
 # Formula definition
 formula_sample=sample~Disttoroadm+Populationm #+factor(tipos)

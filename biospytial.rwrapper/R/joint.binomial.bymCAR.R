@@ -2,7 +2,7 @@
 
 source("single.binomial.bymCAR.R")
 
-joint.binomial.bymCARModel2  <- function(formula_S, formula_P, data=DataFrame,n.sample,burnin, postburnin,thin,verbose){
+joint.binomial.bymCARModel2  <- function(formula_S, formula_P, data=DataFrame,n.sample,burnin, postburnin,thin,verbose,prior.tau2=NULL,prior.sigma2=NULL){
 
 ### Prepare common frame for both
 
@@ -62,10 +62,10 @@ if(n.miss.sample>0) samples.Y.sample <- array(NA, c(n.keep, n.miss.sample))
 
 
 
-model.sample  <- single.binomial.bymCAR(formula=formula_S, name='Sample Effort Model',data=DataFrame, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
+model.sample  <- single.binomial.bymCAR(formula=formula_S, name='Sample Effort Model',data=DataFrame, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=prior.tau2, prior.sigma2=prior.sigma2, MALA=TRUE, verbose=TRUE)
 
 
-model.presence  <- single.binomial.bymCAR(formula=formula_P, name='Presence model', data=DataFrame, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
+model.presence  <- single.binomial.bymCAR(formula=formula_P, name='Presence model', data=DataFrame, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=prior.tau2, prior.sigma2=prior.sigma2, MALA=TRUE, verbose=TRUE)
 
 
 presence.state  <-  model.presence$state
@@ -209,7 +209,7 @@ results.presence  <- SummariseResults(samples.Y = samples.Y.presence,
                              n.keep = n.keep)
 
 
-exports = list("S"=results.sample, "P"=results.presence)
+exports = list("S"=results.sample, "P"=results.presence,"ind.model.S"=model.sample,"ind.model.P"=model.presence)
 
 return(exports)
 } 
