@@ -39,37 +39,52 @@ TDF = mutate_at(TDF,vars(Dist.to.road_m,Elevation_m,
 # Remove unnecessary symbols in variable names
 names(TDF) = lapply(names(TDF),function(x) gsub("_","",x))
 names(TDF) = lapply(names(TDF),function(x) gsub("\\.","",x))
-                    
-## Remove entries with zero neighbours (adjancey matrix)
-### Calculates number of neighbours in D (sum)
-D = apply(M,MARGIN = 1,sum)
-### get index with 0 neighbours
-idx = match(0,D)
-### select cells with no neighbours
-cell_with_no_neighbour = TDF$cellids[idx]
 
-## Erase idx for M and for TDF (Or maybe only for M)
-M_bis = M[-c(idx),-c(idx)]
-
+##### PREPROCESS
 ###
 # Preprocess for generating pseudo absences
 # Change the name of a column that for some reason is called the same
 names(TDF)[23] <- 'covid2'
 ## Treatment for adding missing data
 DataFrame = TDF %>% rowwise() %>% 
-            mutate(sample=pseudo_absence_naive(Plantae,LUCA),species=pseudo_absence_naive(Pinophyta,Plantae))
+            mutate(sample=pseudo_absence_naive(Plantae,LUCA),species=pseudo_absence_trivial(Pinophyta,Plantae))
 
+
+############ This is for removing temporarily (for developing purposes) the NAN values.
+## remove nas
+rr <- DataFrame %>% 
+    filter(!is.na(species) & !is.na(sample))
+
+sam_idx_nan <- which(is.na(DataFrame$sample))
+
+M = M[-c(sam_idx_nan),-c(sam_idx_nan)]
 ## For the moment not take the missing values
 
 #DataFrame = TDF %>% rowwise() %>% 
 #            mutate(sample=pseudo_absence_trivial(Plantae,LUCA),species=pseudo_absence_trivial(Pinophyta,Plantae))
 ###
+#############
+
+
+## Remove entries with zero neighbours (adjancey matrix)
+### Calculates number of neighbours in D (sum)
+D = apply(M,MARGIN = 1,sum)
+### get index with 0 neighbours
+idx = which(D == 0)
+
+### select cells with no neighbours
+cell_with_no_neighbour = TDF$cellids[idx]
+
+## Erase idx for M and for TDF (Or maybe only for M)
+M_bis = M[-c(idx),-c(idx)]
+
+## reformat dataframe
+rr  <- rr[-c(idx),]
+#rr <- slice(rr,idx)
+
 # Formula definition
 formula_sample=sample~Disttoroadm+Populationm #+factor(tipos)
 formula_presence=species~Elevationm+MeanTempm
-n <- nrow(TDF)
-trials <- rep(1,n)
-
 
 
 
