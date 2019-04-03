@@ -2,7 +2,8 @@
 
 source("single.binomial.bymCAR.R")
 
-joint.binomial.bymCARModel2  <- function(formula_S, formula_P, data,n.sample,burnin, postburnin,thin,verbose,prior.tau2=NULL,prior.sigma2=NULL){
+joint.binomial.bymCARModel2  <- function(formula_S, formula_P, data,n.sample,burnin, postburnin,thin,verbose,tau2_sigma2_denominator,prior.tau2=NULL,prior.sigma2=NULL){
+
 
 ## Automatic determination of trials, this may be added later as a varying parameter
 n <- nrow(data)
@@ -96,12 +97,17 @@ CarSampler.presence  <- model.presence$f_sampler
     {
     ## Iteration of the CarSampler
     ## What happen with the hyperparameters ??  
+      temp.tau2  <- presence.state$tau2 / tau2_sigma2_denominator 
+      temp.sigma2  <- presence.state$sigma2 / tau2_sigma2_denominator 
+
       sample.state <-  CarSampler.sample(Y.DA = sample.state$Y.DA,
                       beta =  sample.state$beta,
                       phi = presence.state$phi,
-                      tau2 =  presence.state$tau2,
+                      #tau2 =  presence.state$tau2,
+                      tau2 =  temp.tau2,
                       theta =  presence.state$theta,
-                      sigma2 = presence.state$sigma2,
+                      #sigma2 = presence.state$sigma2,
+                      sigma2 = temp.sigma2,
                       prob = sample.state$prob,
                       proposal.sd.theta = presence.state$proposal.sd.theta,
                       proposal.sd.phi = presence.state$proposal.sd.phi,
@@ -110,13 +116,18 @@ CarSampler.presence  <- model.presence$f_sampler
                       accept = sample.state$accept,
                       iter_index = j) 
 
-
+      
+      temp.tau2  <- sample.state$tau2 / tau2_sigma2_denominator 
+      temp.sigma2  <- sample.state$sigma2 / tau2_sigma2_denominator 
+      
       presence.state <-  CarSampler.presence(Y.DA = presence.state$Y.DA,
                       beta =  presence.state$beta,
                       phi = sample.state$phi,
-                      tau2 =  sample.state$tau2,
+                      #tau2 =  sample.state$tau2,
+                      tau2 =  temp.tau2,
                       theta = sample.state$theta,
-                      sigma2 = sample.state$sigma2,
+                      #sigma2 = sample.state$sigma2,
+                      sigma2 =temp.sigma2,
                       prob = presence.state$prob,
                       proposal.sd.theta = sample.state$proposal.sd.theta,
                       proposal.sd.phi = sample.state$proposal.sd.phi,

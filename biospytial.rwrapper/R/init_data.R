@@ -83,8 +83,8 @@ rr  <- rr[-c(idx),]
 #rr <- slice(rr,idx)
 
 # Formula definition
-formula_sample=sample~Disttoroadm+Populationm #+factor(tipos)
-formula_presence=species~Elevationm+MeanTempm
+formula_sample="sample~Disttoroadm+Populationm" #+factor(tipos)
+formula_presence="species~Elevationm+MeanTempm"
 
 
 
