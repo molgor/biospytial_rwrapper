@@ -52,10 +52,16 @@ Y.DA.presence <- Y.presence
 n.keep <- floor((n.sample)/thin)
 samples.beta.sample <- array(NA, c(n.keep, p.sample))
 samples.beta.presence <- array(NA, c(n.keep, p.sample))
-## The same because they share the GMRF
-samples.re <- array(NA, c(n.keep, K.sample))
-samples.tau2 <- array(NA, c(n.keep, 1))
-samples.sigma2 <- array(NA, c(n.keep, 1))
+
+samples.re.sample <- array(NA, c(n.keep, K.sample))
+samples.tau2.sample <- array(NA, c(n.keep, 1))
+samples.sigma2.sample <- array(NA, c(n.keep, 1))
+
+
+samples.re.presence <- array(NA, c(n.keep, K.sample))
+samples.tau2.presence <- array(NA, c(n.keep, 1))
+samples.sigma2.presence <- array(NA, c(n.keep, 1))
+
 
 samples.loglike.presence <- array(NA, c(n.keep, K.presence))
 samples.fitted.presence <- array(NA, c(n.keep, K.presence))
@@ -92,45 +98,51 @@ sample.state  <- model.sample$state
 
 CarSampler.sample <- model.sample$f_sampler 
 CarSampler.presence  <- model.presence$f_sampler
+
+print("common phi") 
 ###[J] Trace compilation
     for(j in 1:n.sample)
     {
     ## Iteration of the CarSampler
     ## What happen with the hyperparameters ??  
-      temp.tau2  <- presence.state$tau2 / tau2_sigma2_denominator 
-      temp.sigma2  <- presence.state$sigma2 / tau2_sigma2_denominator 
-
+#      temp.tau2  <- presence.state$tau2 / tau2_sigma2_denominator 
+#      temp.sigma2  <- presence.state$sigma2 / tau2_sigma2_denominator 
+      temp.tau2  <- sample.state$tau2  
+      temp.sigma2  <- sample.state$sigma2 
+ 
       sample.state <-  CarSampler.sample(Y.DA = sample.state$Y.DA,
                       beta =  sample.state$beta,
                       phi = presence.state$phi,
-                      #tau2 =  presence.state$tau2,
-                      tau2 =  temp.tau2,
-                      theta =  presence.state$theta,
+                      tau2 =  presence.state$tau2,
+                      #tau2 =  temp.tau2,
+                      theta =  sample.state$theta,
                       #sigma2 = presence.state$sigma2,
                       sigma2 = temp.sigma2,
                       prob = sample.state$prob,
-                      proposal.sd.theta = presence.state$proposal.sd.theta,
-                      proposal.sd.phi = presence.state$proposal.sd.phi,
+                      proposal.sd.theta = sample.state$proposal.sd.theta,
+                      proposal.sd.phi = sample.state$proposal.sd.phi,
                       proposal.sd.beta = sample.state$proposal.sd.beta,
                       accept.all = sample.state$accept.all,
                       accept = sample.state$accept,
                       iter_index = j) 
 
       
-      temp.tau2  <- sample.state$tau2 / tau2_sigma2_denominator 
-      temp.sigma2  <- sample.state$sigma2 / tau2_sigma2_denominator 
+      #temp.tau2  <- sample.state$tau2 * tau2_sigma2_denominator 
+      #temp.sigma2  <- sample.state$sigma2 *  tau2_sigma2_denominator 
       
+      temp.tau2  <- presence.state$tau2  
+      temp.sigma2  <- presence.state$sigma2 
       presence.state <-  CarSampler.presence(Y.DA = presence.state$Y.DA,
                       beta =  presence.state$beta,
                       phi = sample.state$phi,
-                      #tau2 =  sample.state$tau2,
-                      tau2 =  temp.tau2,
-                      theta = sample.state$theta,
+                      tau2 =  sample.state$tau2,
+                      #tau2 =  temp.tau2,
+                      theta = presence.state$theta,
                       #sigma2 = sample.state$sigma2,
                       sigma2 =temp.sigma2,
                       prob = presence.state$prob,
-                      proposal.sd.theta = sample.state$proposal.sd.theta,
-                      proposal.sd.phi = sample.state$proposal.sd.phi,
+                      proposal.sd.theta = presence.state$proposal.sd.theta,
+                      proposal.sd.phi = presence.state$proposal.sd.phi,
                       proposal.sd.beta = presence.state$proposal.sd.beta,
                       accept.all = presence.state$accept.all,
                       accept = presence.state$accept,
@@ -148,9 +160,14 @@ CarSampler.presence  <- model.presence$f_sampler
         samples.beta.sample[ele, ]  <- sample.state$beta
         samples.beta.presence[ele, ]  <- presence.state$beta
         ## Here it's the same because they are sharing the same GMRF
-        samples.re[ele, ] <- presence.state$phi + presence.state$theta
-        samples.tau2[ele, ] <- presence.state$tau2
-        samples.sigma2[ele, ] <- presence.state$sigma2
+
+        samples.re.sample[ele, ] <- sample.state$phi + sample.state$theta
+        samples.tau2.sample[ele, ] <- sample.state$tau2
+        samples.sigma2.sample[ele, ] <- sample.state$sigma2
+        
+        samples.re.presence[ele, ] <- presence.state$phi + presence.state$theta
+        samples.tau2.presence[ele, ] <- presence.state$tau2
+        samples.sigma2.presence[ele, ] <- presence.state$sigma2
         samples.loglike.presence[ele, ] <- presence.state$loglike
         samples.fitted.presence[ele, ] <- presence.state$fitted
             if(n.miss.presence>0) samples.Y.presence[ele, ] <- presence.state$Y.DA[which.miss.presence==0]
@@ -184,9 +201,9 @@ print("Compiling summary for S process")
 results.sample  <- SummariseResults(samples.Y = samples.Y.sample, 
                              samples.fitted = samples.fitted.sample, 
                              samples.beta = samples.beta.sample,  
-                             samples.re = samples.re, 
-                             samples.tau2 = samples.tau2, 
-                             samples.sigma2 =  samples.sigma2, 
+                             samples.re = samples.re.sample, 
+                             samples.tau2 = samples.tau2.sample, 
+                             samples.sigma2 =  samples.sigma2.sample, 
                              samples.loglike = samples.loglike.sample, 
                              X = X.sample, 
                              X.standardised = X.standardised.sample, 
@@ -206,9 +223,9 @@ print("Compiling summary for the P process")
 results.presence  <- SummariseResults(samples.Y = samples.Y.presence, 
                              samples.fitted = samples.fitted.presence, 
                              samples.beta = samples.beta.presence,  
-                             samples.re = samples.re, 
-                             samples.tau2 = samples.tau2, 
-                             samples.sigma2 =  samples.sigma2, 
+                             samples.re = samples.re.presence, 
+                             samples.tau2 = samples.tau2.presence, 
+                             samples.sigma2 =  samples.sigma2.presence, 
                              samples.loglike = samples.loglike.presence, 
                              X = X.presence, 
                              X.standardised = X.standardised.presence, 
