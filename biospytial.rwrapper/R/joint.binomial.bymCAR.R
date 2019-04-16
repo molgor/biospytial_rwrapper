@@ -2,7 +2,7 @@
 
 source("single.binomial.bymCAR.R")
 
-joint.binomial.bymCARModel2  <- function(formula_S, formula_P, data,n.sample,burnin, postburnin,thin,verbose,tau2_sigma2_denominator,prior.tau2=NULL,prior.sigma2=NULL){
+joint.binomial.bymCARModel2  <- function(formula_S, formula_P, data,n.sample,burnin,single_burnin, postburnin,thin,verbose,tau2_sigma2_denominator,prior.tau2=NULL,prior.sigma2=NULL){
 
 
 ## Automatic determination of trials, this may be added later as a varying parameter
@@ -47,9 +47,9 @@ Y.DA.presence <- Y.presence
 
 
 #### Matrices to store samples
-#n.keep <- floor((n.sample - burnin)/thin)
-
-n.keep <- floor((n.sample)/thin)
+n.keep <- floor((n.sample - burnin)/thin)
+print(n.keep)
+#n.keep <- floor((n.sample)/thin)
 samples.beta.sample <- array(NA, c(n.keep, p.sample))
 samples.beta.presence <- array(NA, c(n.keep, p.sample))
 
@@ -74,10 +74,10 @@ if(n.miss.sample>0) samples.Y.sample <- array(NA, c(n.keep, n.miss.sample))
 
 
 
-model.sample  <- single.binomial.bymCAR(formula=formula_S, name='Sample Effort Model',data=data, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=prior.tau2, prior.sigma2=prior.sigma2, MALA=TRUE, verbose=TRUE)
+model.sample  <- single.binomial.bymCAR(formula=formula_S, name='Sample Effort Model',data=data, trials=trials, W=M_bis, burnin=single_burnin, n.sample=single_burnin + postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=prior.tau2, prior.sigma2=prior.sigma2, MALA=TRUE, verbose=TRUE)
 
 
-model.presence  <- single.binomial.bymCAR(formula=formula_P, name='Presence model', data=data, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=prior.tau2, prior.sigma2=prior.sigma2, MALA=TRUE, verbose=TRUE)
+model.presence  <- single.binomial.bymCAR(formula=formula_P, name='Presence model', data=data, trials=trials, W=M_bis, burnin=single_burnin, n.sample=single_burnin + postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=prior.tau2, prior.sigma2=prior.sigma2, MALA=TRUE, verbose=TRUE)
 
 
 presence.state  <-  model.presence$state
@@ -105,44 +105,44 @@ print("common phi")
     {
     ## Iteration of the CarSampler
     ## What happen with the hyperparameters ??  
-#      temp.tau2  <- presence.state$tau2 / tau2_sigma2_denominator 
-#      temp.sigma2  <- presence.state$sigma2 / tau2_sigma2_denominator 
-      temp.tau2  <- sample.state$tau2  
-      temp.sigma2  <- sample.state$sigma2 
+      temp.tau2  <- presence.state$tau2 / tau2_sigma2_denominator 
+      temp.sigma2  <- presence.state$sigma2 / tau2_sigma2_denominator 
+#      temp.tau2  <- presence.state$tau2  
+#      temp.sigma2  <- presence.state$sigma2 
  
       sample.state <-  CarSampler.sample(Y.DA = sample.state$Y.DA,
                       beta =  sample.state$beta,
-                      phi = presence.state$phi,
-                      tau2 =  presence.state$tau2,
+                      phi = presence.state$phi ,
+                      tau2 =  temp.tau2,
                       #tau2 =  temp.tau2,
-                      theta =  sample.state$theta,
+                      theta =  presence.state$theta,
                       #sigma2 = presence.state$sigma2,
                       sigma2 = temp.sigma2,
                       prob = sample.state$prob,
-                      proposal.sd.theta = sample.state$proposal.sd.theta,
-                      proposal.sd.phi = sample.state$proposal.sd.phi,
+                      proposal.sd.theta = presence.state$proposal.sd.theta,
+                      proposal.sd.phi = presence.state$proposal.sd.phi,
                       proposal.sd.beta = sample.state$proposal.sd.beta,
                       accept.all = sample.state$accept.all,
                       accept = sample.state$accept,
                       iter_index = j) 
 
       
-      #temp.tau2  <- sample.state$tau2 * tau2_sigma2_denominator 
-      #temp.sigma2  <- sample.state$sigma2 *  tau2_sigma2_denominator 
+#      temp.tau2  <- sample.state$tau2 * tau2_sigma2_denominator 
+#      temp.sigma2  <- sample.state$sigma2 *  tau2_sigma2_denominator 
       
-      temp.tau2  <- presence.state$tau2  
-      temp.sigma2  <- presence.state$sigma2 
+#      temp.tau2  <- sample.state$tau2  
+#      temp.sigma2  <- sample.state$sigma2 
       presence.state <-  CarSampler.presence(Y.DA = presence.state$Y.DA,
                       beta =  presence.state$beta,
-                      phi = sample.state$phi,
-                      tau2 =  sample.state$tau2,
+                      phi = sample.state$phi ,
+                      tau2 =  temp.tau2,
                       #tau2 =  temp.tau2,
-                      theta = presence.state$theta,
+                      theta = sample.state$theta ,
                       #sigma2 = sample.state$sigma2,
                       sigma2 =temp.sigma2,
                       prob = presence.state$prob,
-                      proposal.sd.theta = presence.state$proposal.sd.theta,
-                      proposal.sd.phi = presence.state$proposal.sd.phi,
+                      proposal.sd.theta = sample.state$proposal.sd.theta,
+                      proposal.sd.phi = sample.state$proposal.sd.phi,
                       proposal.sd.beta = presence.state$proposal.sd.beta,
                       accept.all = presence.state$accept.all,
                       accept = presence.state$accept,
@@ -152,10 +152,14 @@ print("common phi")
     ###################
     ## Save the results
     ###################
-        if(j %%thin==0)
+
+        if(j > burnin & (j-burnin)%%thin==0)
+        #if(j %%thin==0)
+          
         {
 
-        ele <- (j) / thin
+        ele <- (j - burnin) / thin
+        #ele <- (j) / thin
         #samples.beta[ele, ] <- model.sample$beta
         samples.beta.sample[ele, ]  <- sample.state$beta
         samples.beta.presence[ele, ]  <- presence.state$beta

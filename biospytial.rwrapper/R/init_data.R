@@ -76,9 +76,13 @@ idx = which(D == 0)
 
 ### select cells with no neighbours
 cell_with_no_neighbour = TDF$cellids[idx]
-
+## Remove island for TDF
+TDF <- TDF[-c(idx),]
 ## Erase idx for M and for TDF (Or maybe only for M)
 M_bis = M[-c(idx),-c(idx)]
+
+## remove row corresponding to no neighbour (island)
+DataFrame <- DataFrame[-c(idx),]
 
 ## reformat dataframe
 #rr  <- rr[-c(idx),]

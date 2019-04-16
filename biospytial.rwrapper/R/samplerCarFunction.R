@@ -120,7 +120,6 @@ temp2 <- quadform(W.triplet, W.triplet.sum, n.triplet, K, phi, phi, 1)
     
     
     
-    
     #####################
     ## Sample from sigma2
     #####################
