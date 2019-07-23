@@ -2,11 +2,11 @@
 # This implements the independent model [P][S]
 source("single.binomial.bymCAR.R")
 
-joint.binomial.bymCARModel1  <- function(formula_S, formula_P, data=DataFrame,n.sample,burnin, postburnin,thin,verbose){
+joint.binomial.bymCARModel1  <- function(formula_S, formula_P, data=data,n.sample,burnin, postburnin,thin,verbose){
 
 ### Prepare common frame for both
 
-frame.sample.results <- common.frame(formula_S, DataFrame, "binomial")
+frame.sample.results <- common.frame(formula_S, data,  "binomial")
 K.sample <- frame.sample.results$n
 p.sample <- frame.sample.results$p
 X.sample <- frame.sample.results$X
@@ -21,7 +21,7 @@ n.miss.sample <- frame.sample.results$n.miss
 Y.DA.sample <- Y.sample
 
 
-frame.presence.results <- common.frame(formula_P, DataFrame, "binomial")
+frame.presence.results <- common.frame(formula_P, data, "binomial")
 K.presence <- frame.presence.results$n
 p.presence <- frame.presence.results$p
 X.presence <- frame.presence.results$X
@@ -67,10 +67,10 @@ if(n.miss.sample>0) samples.Y.sample <- array(NA, c(n.keep, n.miss.sample))
 
 
 
-model.sample  <- single.binomial.bymCAR(formula=formula_S, name='Sample Effort Model',data=DataFrame, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
+model.sample  <- single.binomial.bymCAR(formula=formula_S, name='Sample Effort Model',data=data, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
 
 
-model.presence  <- single.binomial.bymCAR(formula=formula_P, name='Presence model', data=DataFrame, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
+model.presence  <- single.binomial.bymCAR(formula=formula_P, name='Presence model', data=data, trials=trials, W=M_bis, burnin=burnin, n.sample=postburnin, thin=1, prior.mean.beta=NULL, prior.var.beta=NULL, prior.tau2=NULL, prior.sigma2=NULL, MALA=TRUE, verbose=TRUE)
 
 
 presence.state  <-  model.presence$state

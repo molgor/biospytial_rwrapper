@@ -84,6 +84,9 @@ M_bis = M[-c(idx),-c(idx)]
 ## remove row corresponding to no neighbour (island)
 DataFrame <- DataFrame[-c(idx),]
 
+n <- dim(M_bis)[1]
+trials <- rep(1,n)
+
 ## reformat dataframe
 #rr  <- rr[-c(idx),]
 

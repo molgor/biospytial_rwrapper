@@ -54,9 +54,9 @@ formula <- response ~ Disttoroadm + Populationm + Elevationm + MeanTempm
 ## now, assuming that the order in M_bis is the same as in cellids (OOOORDEEER, not value)
 ## Run the model
 trials = rep(1,2 * nK)
-burnin = 29000
-n.sample = 30000
-thin = 1
+burnin = 50000
+n.sample = 100000
+thin = 50
 model2 <- S.CARmultilevel(formula,family = 'binomial',
                           trials=trials, 
                           W=M_bis, 
