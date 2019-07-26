@@ -63,7 +63,7 @@ SummariseResults  <- function(samples.Y,samples.fitted,samples.beta, samples.re,
   samples <- list(beta=samples.beta.orig, psi=mcmc(samples.re), tau2=mcmc(samples.tau2), sigma2=mcmc(samples.sigma2), fitted=mcmc(samples.fitted), Y=mcmc(samples.Y),loglike=mcmc(samples.loglike))
 
 
-  results <- list(summary.results=summary.results, samples=samples, fitted.values=fitted.values, residuals=residuals, modelfit=modelfit,mean.prob=mean.prob, accept=accept.final, localised.structure=NULL,  formula=formula, model=model.string, X=X)
+  results <- list(summary.results=summary.results, samples=samples, fitted.values=fitted.values, residuals=residuals, modelfit=modelfit,mean.prob=mean.prob,deviance.fitted=deviance.fitted, accept=accept.final, localised.structure=NULL,  formula=formula, model=model.string, X=X)
 
 
 

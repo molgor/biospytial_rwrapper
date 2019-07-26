@@ -25,8 +25,6 @@ frame.presence.results <- common.frame(formula_P, data, "binomial")
 K.presence <- frame.presence.results$n
 p.presence <- frame.presence.results$p
 X.presence <- frame.presence.results$X
-
-
 X.standardised.presence <- frame.presence.results$X.standardised
 X.sd.presence <- frame.presence.results$X.sd
 X.mean.presence <- frame.presence.results$X.mean
@@ -45,14 +43,14 @@ Y.DA.presence <- Y.presence
 
 n.keep <- floor((n.sample)/thin)
 samples.beta.sample <- array(NA, c(n.keep, p.sample))
-samples.beta.presence <- array(NA, c(n.keep, p.sample))
+samples.beta.presence <- array(NA, c(n.keep, p.presence))
 ## The same because they share the GMRF
 samples.re.sample <- array(NA, c(n.keep, K.sample))
 samples.tau2.sample <- array(NA, c(n.keep, 1))
 samples.sigma2.sample <- array(NA, c(n.keep, 1))
 
 
-samples.re.presence <- array(NA, c(n.keep, K.sample))
+samples.re.presence <- array(NA, c(n.keep, K.presence))
 samples.tau2.presence <- array(NA, c(n.keep, 1))
 samples.sigma2.presence <- array(NA, c(n.keep, 1))
 
@@ -135,21 +133,20 @@ CarSampler.presence  <- model.presence$f_sampler
         ele <- (j) / thin
         #samples.beta[ele, ] <- model.sample$beta
         samples.beta.sample[ele, ]  <- sample.state$beta
-        samples.beta.presence[ele, ]  <- presence.state$beta
-        ## Here it's the same because they are sharing the same GMRF
         samples.re.sample[ele, ] <- sample.state$phi + sample.state$theta
-        samples.re.presence[ele, ] <- presence.state$phi + presence.state$theta
         samples.tau2.sample[ele, ] <- sample.state$tau2
-        samples.tau2.presence[ele, ] <- presence.state$tau2
-        samples.sigma2.presence[ele, ] <- presence.state$sigma2
         samples.sigma2.sample[ele, ] <- sample.state$sigma2
-        samples.loglike.presence[ele, ] <- presence.state$loglike
-        samples.fitted.presence[ele, ] <- presence.state$fitted
-            if(n.miss.presence>0) samples.Y.presence[ele, ] <- presence.state$Y.DA[which.miss.presence==0]
         samples.loglike.sample[ele, ] <- sample.state$loglike
         samples.fitted.sample[ele, ] <- sample.state$fitted
             if(n.miss.sample>0) samples.Y.sample[ele, ] <- sample.state$Y.DA[which.miss.sample==0]
         
+        samples.beta.presence[ele, ]  <- presence.state$beta
+        samples.re.presence[ele, ] <- presence.state$phi + presence.state$theta
+        samples.tau2.presence[ele, ] <- presence.state$tau2
+        samples.sigma2.presence[ele, ] <- presence.state$sigma2
+        samples.loglike.presence[ele, ] <- presence.state$loglike
+        samples.fitted.presence[ele, ] <- presence.state$fitted
+            if(n.miss.presence>0) samples.Y.presence[ele, ] <- presence.state$Y.DA[which.miss.presence==0]
                }else
         {
         }
@@ -217,7 +214,32 @@ results.presence  <- SummariseResults(samples.Y = samples.Y.presence,
                              n.keep = n.keep)
 
 
-exports = list("S"=results.sample, "P"=results.presence)
+
+## Compiling results for independent model
+Deviance <- function(obs,mean.prob,trials) {
+    devfit = -2 * sum(dbinom(x=obs,size=trials,prob=mean.prob,log=TRUE),na.rm=TRUE)
+    return(devfit)
+}
+
+Y = c(Y.sample, Y.presence)
+mean.prob = rbind(results.sample$mean.prob,results.presence$mean.prob)
+trials.multiple = rep(1,2*length(trials))
+totaldeviance = Deviance(Y,mean.prob,trials.multiple)
+S.loglike = samples.loglike.sample
+P.loglike = samples.loglike.presence
+sample.sp.loglike = cbind(S.loglike,P.loglike)
+summary.results = common.modelfit(sample.sp.loglike,totaldeviance)
+
+
+### Compile fitted, samples predicted
+## Beta code. 
+## The fitted values (aggregated by means) is already the inverse of odds ratio
+## The joint probability is the multiplication of S and P because we are assuming
+## independence
+fitted_joint = samples.fitted.sample * samples.fitted.presence 
+samples = list("fitted.joint"=fitted_joint,"S.observed"=Y.sample,"P.observed"=Y.presence)
+fitted.values = results.sample$fitted.values * results.presence$fitted.values
+exports = list("S"=results.sample, "P"=results.presence,"summary.results"=summary.results,"fitted.values"=fitted.values ,"samples"=samples)
 
 return(exports)
 } 
