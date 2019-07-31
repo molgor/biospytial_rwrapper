@@ -57,19 +57,36 @@ trials = rep(1,2 * nK)
 burnin = 50000
 n.sample = 100000
 thin = 50
-model2 <- S.CARmultilevel(formula,family = 'binomial',
-                          trials=trials, 
-                          W=M_bis, 
-                          ind.area = idarea,
-                         ind.re=factor(idarea),
-                          rho = 1,
-                          burnin = burnin,
-                          n.sample = n.sample,
-                          data = DD
-                         )
+#model2 <- S.CARmultilevel(formula,family = 'binomial',
+#                          trials=trials, 
+#                          W=M_bis, 
+#                          ind.area = idarea,
+#                         ind.re=factor(idarea),
+#                          rho = 1,
+#                          burnin = burnin,
+#                          n.sample = n.sample,
+#                          data = DD
+#                         )
+#
 
 
+## Cross validation
+library(pROC)
+library('caret')
+#trains = createFolds(y = DataFrame$species, k=7, returnTrain = TRUE)
+validate = createFolds(y = DataFrame$species, k=7, returnTrain = FALSE)
 
-
-
+#DataFrame$presences <- DataFrame$species
+#model2 <- S.CARmultilevel(formula,family = 'binomial',
+#                          trials=trials, 
+#                          W=M_bis, 
+#                          ind.area = idarea,
+#                         ind.re=factor(idarea),
+#                          rho = 1,
+#                          burnin = burnin,
+#                          n.sample = n.sample,
+#                          data = DD
+#                         )
+#
+#
 

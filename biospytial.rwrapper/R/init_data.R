@@ -45,9 +45,14 @@ names(TDF) = lapply(names(TDF),function(x) gsub("\\.","",x))
 # Preprocess for generating pseudo absences
 # Change the name of a column that for some reason is called the same
 names(TDF)[23] <- 'covid2'
-## Treatment for adding missing data
+## Treatment for adding missing data species = PINES
 DataFrame = TDF %>% rowwise() %>% 
             mutate(sample=pseudo_absence_naive(Plantae,LUCA),species=pseudo_absence_trivial(Pinophyta,Plantae))
+
+
+## Treatment for adding missing data species = Abies
+#DataFrame = TDF %>% rowwise() %>% 
+#            mutate(sample=pseudo_absence_naive(Pinophyta,Plantae),species=pseudo_absence_trivial(Abies,Pinophyta))
 
 
 ############ This is for removing temporarily (for developing purposes) the NAN values.
