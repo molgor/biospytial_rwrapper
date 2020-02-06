@@ -24,7 +24,7 @@ M <- np$load(mat_filename)
 
 ## Training data.frame
 TDF = read.csv("/outputs/training_data_sample_puebla_p9_abies_pinophyta.csv")
-
+#TDF = read.csv("/outputs/training_data_sample_puebla_p9_tyrannidae_birds.csv")
 ## Order it according to the id of the cell
 ### This is important because the adjancy matrix rows need to be the same
 TDF = TDF[order(TDF$cell_ids),]
@@ -45,9 +45,15 @@ names(TDF) = lapply(names(TDF),function(x) gsub("\\.","",x))
 # Preprocess for generating pseudo absences
 # Change the name of a column that for some reason is called the same
 names(TDF)[23] <- 'covid2'
-## Treatment for adding missing data species = PINES
+
+
+## missing values only in X
+#DataFrame = TDF %>% rowwise() %>% 
+#            mutate(sample=pseudo_absence_naive(Plantae,LUCA),species=pseudo_absence_trivial(Pinophyta,Plantae))
+
+## missing values in X and Y
 DataFrame = TDF %>% rowwise() %>% 
-            mutate(sample=pseudo_absence_naive(Plantae,LUCA),species=pseudo_absence_trivial(Pinophyta,Plantae))
+            mutate(sample=pseudo_absence_naive(Plantae,LUCA),species=pseudo_absence_naive(Pinophyta,Plantae))
 
 
 ## Treatment for adding missing data species = Abies
@@ -98,8 +104,8 @@ trials <- rep(1,n)
 # Formula definition
 formula_sample= sample~Disttoroadm+Populationm
 #+factor(tipos)
-formula_presence= species~Elevationm+MeanTempm
-
+#formula_presence= species~Elevationm+MeanTempm
+formula_presence= species~Elevationm+Precipitationm
 
 
 
